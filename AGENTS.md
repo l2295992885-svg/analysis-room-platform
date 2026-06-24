@@ -70,3 +70,11 @@
 - `feature/daily-violation`：每日 LKJ 音视频违标公示
 - `feature/import-export`：Excel 导入导出模板
 - `feature/security-review`：权限和安全审查
+
+## RuoYi-Vue-Plus 参考规则
+
+后端底座重点参考 RuoYi-Vue-Plus，但只参考其权限、安全、日志、数据权限、Excel、文件存储、代码生成器等成熟设计。
+
+RuoYi-Vue-Plus 源码不得直接混入本项目。
+
+第一阶段不启用多租户、多数据源、复杂工作流、分布式任务。
