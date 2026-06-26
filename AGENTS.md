@@ -70,3 +70,13 @@
 - `feature/daily-violation`：每日 LKJ 音视频违标公示
 - `feature/import-export`：Excel 导入导出模板
 - `feature/security-review`：权限和安全审查
+
+## 前端工程规则
+
+- 前端工程位于 `frontend/`。
+- 前端基础模板来源于 Art Design Pro。
+- 后续前端开发必须遵守 Art Design Pro 的目录结构和工程约定。
+- 前端技术路线以 Vue3、TypeScript、Vite、Element Plus、pnpm 工作流为基础。
+- 不得保留模板演示页面作为正式业务功能。
+- 不得只做前端按钮隐藏，后端接口仍必须做权限校验。
+- 前端页面应服务于综合分析室平台业务，包括功能首页、信箱中心、待办中心、文件中心、聊天协同、违章管理、每日 LKJ 音视频违标公示、基础数据、系统管理、统计分析等模块。

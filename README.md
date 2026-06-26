@@ -38,3 +38,11 @@ scripts/    本地启动、构建、部署辅助脚本
 ```
 
 详细开发规则见 `AGENTS.md` 和 `docs/` 目录。
+
+## 前端模板
+
+前端基础模板已导入 `frontend/`，来源为 Art Design Pro：
+
+https://github.com/Daymychen/art-design-pro
+
+后续前端业务页面将在该模板基础上改造，重点实现极简功能首页、信箱中心、待办中心、文件中心、聊天协同、违章管理、每日 LKJ 音视频违标公示等功能。
