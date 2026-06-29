@@ -11,6 +11,7 @@ import org.dromara.common.core.domain.R;
 import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.exception.SseException;
 import org.dromara.common.core.exception.base.BaseException;
+import org.dromara.common.core.utils.LogSanitizer;
 import org.dromara.common.core.utils.StreamUtils;
 import org.dromara.common.json.utils.JsonUtils;
 import org.springframework.boot.json.JsonParseException;
@@ -69,7 +70,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SseException.class)
     public String handleNotLoginException(SseException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
-        log.debug("请求地址'{}',认证失败'{}',无法访问系统资源", requestURI, e.getMessage());
+        log.debug("请求地址'{}',认证失败'{}',无法访问系统资源", requestURI, LogSanitizer.sanitize(e.getMessage()));
         return JsonUtils.toJsonString(R.fail(HttpStatus.HTTP_UNAUTHORIZED, "认证失败，无法访问系统资源"));
     }
 

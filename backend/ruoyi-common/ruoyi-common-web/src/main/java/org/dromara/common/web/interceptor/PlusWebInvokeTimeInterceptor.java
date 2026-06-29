@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.dromara.common.core.constant.SystemConstants;
+import org.dromara.common.core.utils.LogSanitizer;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.json.utils.JsonUtils;
 import org.dromara.common.web.filter.RepeatedlyRequestWrapper;
@@ -56,8 +57,8 @@ public class PlusWebInvokeTimeInterceptor implements HandlerInterceptor {
             Map<String, String[]> parameterMap = request.getParameterMap();
             if (MapUtil.isNotEmpty(parameterMap)) {
                 Map<String, String[]> map = new LinkedHashMap<>(parameterMap);
-                MapUtil.removeAny(map, SystemConstants.EXCLUDE_PROPERTIES);
-                String parameters = JsonUtils.toJsonString(map);
+                map.keySet().removeIf(this::isSensitiveField);
+                String parameters = LogSanitizer.sanitize(JsonUtils.toJsonString(map));
                 log.info("[PLUS]开始请求 => URL[{}],参数类型[param],参数:[{}]", url, parameters);
             } else {
                 log.info("[PLUS]开始请求 => URL[{}],无参数", url);
@@ -80,7 +81,7 @@ public class PlusWebInvokeTimeInterceptor implements HandlerInterceptor {
             // 收集要删除的字段名（避免 ConcurrentModification）
             Set<String> fieldsToRemove = new HashSet<>();
             objectNode.fieldNames().forEachRemaining(fieldName -> {
-                if (ArrayUtil.contains(excludeProperties, fieldName)) {
+                if (isSensitiveField(fieldName)) {
                     fieldsToRemove.add(fieldName);
                 }
             });
@@ -93,6 +94,13 @@ public class PlusWebInvokeTimeInterceptor implements HandlerInterceptor {
                 removeSensitiveFields(child, excludeProperties);
             }
         }
+    }
+
+    private boolean isSensitiveField(String fieldName) {
+        if (StringUtils.isBlank(fieldName)) {
+            return false;
+        }
+        return ArrayUtil.containsIgnoreCase(SystemConstants.EXCLUDE_PROPERTIES, fieldName);
     }
 
     @Override

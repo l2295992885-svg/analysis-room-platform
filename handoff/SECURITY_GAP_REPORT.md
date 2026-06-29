@@ -84,3 +84,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\acceptance\security-
 4. 用真实组织关系复验分析员、班长、主任、车间、车队、指导组的数据边界。
 5. 将安全扫描、构建、每日 LKJ 验收接入 CI。
 6. 配置 HTTPS、备份、监控告警和审计日志留存策略。
+
+## 2026-06-30 增量补强：认证异常日志脱敏
+
+本轮复核时发现 Sa-Token 认证失败日志在“token 无效”场景下可能输出 token 原文。已新增 `LogSanitizer`，并接入 Sa-Token 异常处理、MyBatis 包装认证异常、SSE 认证异常、WebSocket 认证失败日志，以及请求参数日志的敏感字段过滤。
+
+验证结果：
+
+| 验证项 | 结果 |
+| --- | --- |
+| 伪造 JWT 访问受保护接口 | 返回 401 |
+| 后端认证失败日志 | `token 无效：[REDACTED]`，未输出 token 原文 |
+| `mvn clean package -DskipTests` | 通过，36 个 Maven 模块成功，总耗时 47.733s |
+| `npm run build:prod` | 通过，构建耗时 16.48s，仍有大 chunk 警告 |
+| `daily-lkj-mvp-check.ps1` | `PASS=56, FAIL=0, TODO=1, SKIP=0`；脚本因 TODO 返回非零，但无失败项 |
+| `security-gap-scan.ps1` | 未出现 `url-token-risk`；`credential-keywords=681` 需人工分类 |
+| `git diff --check` | 通过，仅 Windows LF/CRLF 工作区警告 |
+
+剩余风险：生产上线前仍需在网关、反向代理、容器日志采集、访问日志格式和异常日志平台上统一做 header/query/body 脱敏策略，并禁用或重置开发测试账号。

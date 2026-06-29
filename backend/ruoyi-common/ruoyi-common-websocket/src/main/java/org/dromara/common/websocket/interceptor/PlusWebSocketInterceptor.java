@@ -4,6 +4,7 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.core.domain.model.LoginUser;
+import org.dromara.common.core.utils.LogSanitizer;
 import org.dromara.common.redis.utils.RedisUtils;
 import org.dromara.common.core.utils.ServletUtils;
 import org.dromara.common.core.utils.StringUtils;
@@ -75,7 +76,7 @@ public class PlusWebSocketInterceptor implements HandshakeInterceptor {
             attributes.put(LOGIN_USER_KEY, loginUser);
             return true;
         } catch (NotLoginException e) {
-            log.error("WebSocket 认证失败'{}',无法访问系统资源", e.getMessage());
+            log.error("WebSocket 认证失败'{}',无法访问系统资源", LogSanitizer.sanitize(e.getMessage()));
             return false;
         }
     }

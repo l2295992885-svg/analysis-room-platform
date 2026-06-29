@@ -135,3 +135,20 @@
 ## 11. 本阶段停止点
 
 阶段 14 已按安全边界补强收口。未继续实现统计分析、大屏、完整 IM、复杂工作流或其他新增业务模块。
+
+## 2026-06-30 增量验证与安全补强
+
+在 PR #3 合并冲突解决并完成初轮验证后，额外发现认证异常日志可能输出无效 token 原文。已补充公共日志脱敏：`LogSanitizer` 统一脱敏 JWT、Bearer、Authorization、Cookie、token、password、secret、credential 等敏感片段；请求参数日志也扩展了敏感字段过滤。
+
+最新验证结果：
+
+| 命令或检查 | 结果 |
+| --- | --- |
+| `mvn clean package -DskipTests` | 通过，36 个 Maven 模块成功，总耗时 47.733s |
+| `npm run build:prod` | 通过，构建耗时 16.48s，仍有大 chunk 警告 |
+| `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\acceptance\daily-lkj-mvp-check.ps1` | `PASS=56, FAIL=0, TODO=1, SKIP=0`；无失败项 |
+| `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\acceptance\security-gap-scan.ps1` | 未出现 `url-token-risk`；`credential-keywords=681` |
+| 运行时伪造 JWT 认证失败日志 | 输出 `[REDACTED]`，未输出 token 原文 |
+| `git diff --check` | 通过，仅 Windows LF/CRLF 工作区警告 |
+
+PR #3 保持 Draft，不自动合并。建议继续按 commit group 审查，生产前补齐 CI、真实组织数据复核、生产密钥治理、HTTPS、网关/日志平台脱敏、备份和监控告警。

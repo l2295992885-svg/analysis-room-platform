@@ -6,6 +6,7 @@ import com.baomidou.dynamic.datasource.exception.CannotFindDataSourceException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.core.domain.R;
+import org.dromara.common.core.utils.LogSanitizer;
 import org.mybatis.spring.MyBatisSystemException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,7 +39,7 @@ public class MybatisExceptionHandler {
         String requestURI = request.getRequestURI();
         Throwable root = getRootCause(e);
         if (root instanceof NotLoginException) {
-            log.error("请求地址'{}',认证失败'{}',无法访问系统资源", requestURI, root.getMessage());
+            log.error("请求地址'{}',认证失败'{}',无法访问系统资源", requestURI, LogSanitizer.sanitize(root.getMessage()));
             return R.fail(HttpStatus.HTTP_UNAUTHORIZED, "认证失败，无法访问系统资源");
         }
         if (root instanceof CannotFindDataSourceException) {

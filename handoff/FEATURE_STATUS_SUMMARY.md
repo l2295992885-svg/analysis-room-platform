@@ -73,3 +73,21 @@
 3. 用真实组织关系复验分析员、班长、主任、车间、车队、指导组的数据边界。
 4. 生产前禁用或重置所有开发测试账号。
 5. 完成生产密钥管理、HTTPS、访问日志脱敏、备份和监控告警。
+
+## 2026-06-30 增量状态
+
+本轮在安全复核中补充了认证异常日志脱敏能力，避免无效 token 原文写入后端日志。MVP 业务功能未扩展，仍保持阶段 14 边界。
+
+最新状态：
+
+| 项目 | 结果 |
+| --- | --- |
+| URL token 风险 | `url-token-risk = 0` |
+| 认证异常日志 token 原文风险 | 已通过 `LogSanitizer` 脱敏，运行时验证为 `[REDACTED]` |
+| 后端构建 | `mvn clean package -DskipTests` 通过 |
+| 前端构建 | `npm run build:prod` 通过，存在大 chunk 警告 |
+| MVP 验收 | `PASS=56, FAIL=0, TODO=1, SKIP=0` |
+| 安全扫描 | `credential-keywords=681`，需人工分类；未出现 URL token 风险 |
+| 工作区产物 | `target/`、`frontend/dist/`、`node_modules/` 未进入待提交清单 |
+
+当前仍不建议直接生产上线。下一步最小任务仍是接入 CI、用真实组织数据复核数据权限、完成生产密钥治理和网关/日志平台级脱敏。
