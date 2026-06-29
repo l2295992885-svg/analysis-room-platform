@@ -52,7 +52,7 @@ jobs:
 
       - name: Install dependencies
         shell: pwsh
-        run: npm ci
+        run: npm install --no-audit --no-fund --package-lock=false
 
       - name: Build frontend
         shell: pwsh
