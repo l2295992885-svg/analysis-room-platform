@@ -1,0 +1,108 @@
+name: PR Quality Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-build:
+    name: Backend Maven Build
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build backend
+        shell: pwsh
+        run: mvn clean package -DskipTests
+
+  frontend-build:
+    name: Frontend Production Build
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        shell: pwsh
+        run: npm ci
+
+      - name: Build frontend
+        shell: pwsh
+        run: npm run build:prod
+
+  security-scan:
+    name: Security Boundary Scan
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run security scan
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP 'security-findings.json'
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\acceptance\security-gap-scan.ps1 -OutputPath $output
+          $findings = @()
+          if (Test-Path -LiteralPath $output) {
+            $raw = Get-Content -LiteralPath $output -Raw
+            if (-not [string]::IsNullOrWhiteSpace($raw)) {
+              $parsed = $raw | ConvertFrom-Json
+              $findings = if ($parsed -is [array]) {
+                $parsed
+              } elseif ($null -eq $parsed) {
+                @()
+              } else {
+                @($parsed)
+              }
+            }
+          }
+          $urlTokenRisks = @($findings | Where-Object { $_.category -eq 'url-token-risk' })
+          $privateKeys = @($findings | Where-Object { $_.category -eq 'private-key-marker' })
+          $credentialKeywords = @($findings | Where-Object { $_.category -eq 'credential-keywords' })
+          Write-Host ("credential-keywords={0}" -f $credentialKeywords.Count)
+          Write-Host ("url-token-risk={0}" -f $urlTokenRisks.Count)
+          Write-Host ("private-key-marker={0}" -f $privateKeys.Count)
+          if ($urlTokenRisks.Count -gt 0 -or $privateKeys.Count -gt 0) {
+            Write-Error "Security scan failed: URL token risk or private key marker found."
+          }
+
+  whitespace-check:
+    name: Git Whitespace Check
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check whitespace errors
+        shell: pwsh
+        run: git diff --check
