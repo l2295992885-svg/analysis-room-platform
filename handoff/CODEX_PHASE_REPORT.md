@@ -47,6 +47,8 @@
 | `backend/script/sql/analysis_room_phase7_daily_violation_import_workflow.sql` | 补充结果更正、版本查看、编码覆盖权限码和多角色开发账号权限 |
 | `scripts/acceptance/daily-lkj-mvp-check.ps1` | 扩展多角色、数据权限、字段权限、附件、导出、结果版本验收 |
 | `scripts/acceptance/security-gap-scan.ps1` | 持续扫描 URL token 风险，覆盖 `Authorization=Bearer` 和 token query 模式 |
+| `.github/workflows/pr-quality.yml` | 接入 PR 质量门禁：后端 Maven 构建、前端生产构建、安全边界扫描、PR 范围空白检查 |
+| 监控配置 | `APP_MONITOR_USERNAME`、`APP_MONITOR_PASSWORD` 环境变量优先，移除监控默认密码形态 |
 
 ## 4. 构建与检查
 
@@ -97,10 +99,10 @@
 | 项目 | 说明 |
 | --- | --- |
 | 真实组织关系 | 当前多角色账号和组织范围是开发环境最小数据，生产必须接入真实车间/车队/指导组隶属关系 |
-| 生产密钥治理 | 数据库、Redis、JWT、OSS 等必须通过生产密钥管理或安全环境变量注入 |
+| 生产密钥治理 | 监控凭据已环境变量化；数据库、Redis、JWT、OSS 等仍必须通过生产密钥管理或安全环境变量注入 |
 | 访问日志脱敏 | 仍需在网关、后端访问日志、异常日志中统一脱敏 query 和敏感头 |
 | 开发账号处理 | `*_test` 开发账号生产前必须删除、禁用或强制重置 |
-| CI 门禁 | 构建、验收脚本、安全扫描尚未接入 GitHub Actions |
+| CI 门禁 | PR 已接入后端构建、前端构建、安全扫描和空白检查；每日 LKJ 验收脚本仍需稳定接入 CI 或夜间任务 |
 | 运维闭环 | HTTPS、备份、监控告警、审计留存策略尚未闭环 |
 
 ## 8. 建议拆分提交方案
@@ -124,13 +126,13 @@
 | 远端仓库 | `https://github.com/l2295992885-svg/analysis-room-platform.git` |
 | 默认分支 | `main` |
 | 当前本地分支 | `feature/ruoyi-5x-baseline-import` |
-| 远端同名分支 | 尚不存在 |
-| 当前打开 PR | `#1 docs: add RuoYi-Vue-Plus reference guidance`、`#2 feat: initialize frontend with Art Design Pro`，均 open、未合并 |
-| 推送建议 | 当前工作区跨度很大，建议按拆分提交方案分批提交，不建议直接推送一个巨大提交 |
+| 远端同名分支 | 已推送 |
+| 当前打开 PR | `#3 chore: import RuoYi 5.x baseline and phase 14 hardening`，Draft/Open/MERGEABLE；`#1`、`#2` 仍 open、未合并 |
+| 推送建议 | PR #3 已按 commit group 拆分提交，建议继续保持 Draft 审查，不要自动合并 |
 
 ## 10. 是否建议进入内部试运行准备
 
-建议进入“内部试运行准备”，不建议直接生产上线。当前本地 MVP 已通过构建和阶段 14 自动验收，但生产上线前仍必须完成真实组织数据复验、生产密钥治理、HTTPS、访问日志脱敏、备份、监控告警和 CI 门禁。
+建议进入“内部试运行准备”，不建议直接生产上线。当前本地 MVP 已通过构建和阶段 14 自动验收，PR 质量门禁已覆盖后端构建、前端构建、安全扫描和空白检查；生产上线前仍必须完成真实组织数据复验、数据库/Redis/JWT/OSS 等生产密钥治理、HTTPS、访问日志脱敏、备份、监控告警，以及每日 LKJ 验收脚本 CI 化。
 
 ## 11. 本阶段停止点
 
@@ -151,4 +153,21 @@
 | 运行时伪造 JWT 认证失败日志 | 输出 `[REDACTED]`，未输出 token 原文 |
 | `git diff --check` | 通过，仅 Windows LF/CRLF 工作区警告 |
 
-PR #3 保持 Draft，不自动合并。建议继续按 commit group 审查，生产前补齐 CI、真实组织数据复核、生产密钥治理、HTTPS、网关/日志平台脱敏、备份和监控告警。
+PR #3 保持 Draft，不自动合并。建议继续按 commit group 审查，生产前补齐真实组织数据复核、生产密钥治理、HTTPS、网关/日志平台脱敏、备份、监控告警和每日 LKJ 验收脚本 CI 化。
+
+## 2026-06-30 增量验证：监控凭据与 PR 质量门禁
+
+在认证日志脱敏后继续复核安全扫描结果，已将监控默认凭据外部化：`monitor.password` 默认值改为占位值，`ruoyi-admin`、`ruoyi-monitor-admin`、`ruoyi-snailjob-server` 统一通过 `APP_MONITOR_USERNAME`、`APP_MONITOR_PASSWORD` 读取监控凭据。
+
+最新远端验证结果：
+
+| 检查 | 结果 |
+| --- | --- |
+| commit | `aaff349 fix: externalize monitor credentials` |
+| Backend Maven Build | GitHub Actions 通过 |
+| Frontend Production Build | GitHub Actions 通过 |
+| Security Boundary Scan | GitHub Actions 通过 |
+| Git Whitespace Check | GitHub Actions 通过 |
+| PR 状态 | #3 Draft/Open/MERGEABLE，auto-merge 未开启 |
+
+当前剩余 CI 缺口缩小为：每日 LKJ MVP 验收脚本尚未稳定接入 GitHub Actions，建议后续作为单独任务处理测试数据准备、外部服务依赖和执行耗时。

@@ -7,7 +7,7 @@
 
 本阶段已优先修复 URL 长期 token 暴露风险。SSE 和 WebSocket 改为服务端短期一次性 ticket，流程 iframe 不再拼接 `Authorization=Bearer ...`。自动扫描中未再出现 `url-token-risk` 分类，按脚本规则 URL token 风险为 0。
 
-当前没有发现必须立即停止的真实密钥提交证据，但仍存在上线前必须处理的安全工作：生产密钥管理、访问日志 query 脱敏、HTTPS、真实组织数据权限复验、开发账号禁用或重置、CI 安全门禁。
+当前没有发现必须立即停止的真实密钥提交证据。2026-06-30 已将监控默认凭据改为环境变量优先读取和占位值兜底，并把后端构建、前端构建、安全扫描、PR 空白检查接入 GitHub Actions。上线前仍必须处理：生产密钥管理、访问日志 query 脱敏、HTTPS、真实组织数据权限复验、开发账号禁用或重置、每日 LKJ 验收脚本 CI 化。
 
 ## 2. 自动扫描结果
 
@@ -61,6 +61,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\acceptance\security-
 | OSS accessKey/secretKey | 模板字段存在 | 不得提交真实密钥 |
 | 前端 RSA key | 当前为空或占位 | 不得提交真实私钥 |
 | 前端 client id | 固定公开客户端标识 | 不能作为安全边界 |
+| 监控账号密码 | 已改为优先读取 `APP_MONITOR_USERNAME`、`APP_MONITOR_PASSWORD`，默认仅保留占位值 | 生产必须通过环境变量或密钥管理注入强凭据 |
 | 开发测试用户 | 存在 `*_test` 用户和开发密码 hash | 生产必须删除、禁用或强制重置 |
 
 ## 6. 本轮安全验收
@@ -82,7 +83,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\acceptance\security-
 2. 生产环境统一使用密钥管理或环境变量注入数据库、Redis、JWT、OSS、第三方登录 secret。
 3. 禁用或重置所有开发测试账号。
 4. 用真实组织关系复验分析员、班长、主任、车间、车队、指导组的数据边界。
-5. 将安全扫描、构建、每日 LKJ 验收接入 CI。
+5. 后端构建、前端构建、安全扫描已接入 PR CI；每日 LKJ 验收脚本仍需接入稳定 CI 或夜间验收任务。
 6. 配置 HTTPS、备份、监控告警和审计日志留存策略。
 
 ## 2026-06-30 增量补强：认证异常日志脱敏
@@ -102,3 +103,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\acceptance\security-
 | `git diff --check` | 通过，仅 Windows LF/CRLF 工作区警告 |
 
 剩余风险：生产上线前仍需在网关、反向代理、容器日志采集、访问日志格式和异常日志平台上统一做 header/query/body 脱敏策略，并禁用或重置开发测试账号。
+
+## 2026-06-30 增量补强：监控默认凭据外部化与 PR CI
+
+本轮继续复核安全扫描中的凭据关键词命中，发现 Spring Boot Admin 监控相关配置仍存在模板默认密码形态。已将 `backend/pom.xml` 中 `monitor.password` 默认值改为占位值，并将 `ruoyi-admin`、`ruoyi-monitor-admin`、`ruoyi-snailjob-server` 的监控用户名和密码统一改为优先读取 `APP_MONITOR_USERNAME`、`APP_MONITOR_PASSWORD`。
+
+验证结果：
+
+| 验证项 | 结果 |
+| --- | --- |
+| 监控默认凭据 | 长期默认密码已移除，保留环境变量优先和占位值兜底 |
+| 本地后端构建 | `mvn clean package -DskipTests` 通过，36 个 Maven 模块成功 |
+| PR GitHub Actions | commit `aaff349` 上 Backend Maven Build、Frontend Production Build、Security Boundary Scan、Git Whitespace Check 全部通过 |
+| PR 状态 | PR #3 保持 Draft/Open/MERGEABLE，未开启 auto-merge |
+
+剩余风险：`credential-keywords` 仍会命中模板字段、测试脚本和文档说明，生产前需要结合部署清单逐项分级；数据库、Redis、JWT、OSS、三方登录、监控账号仍必须由生产密钥管理或安全环境变量注入真实强凭据。
