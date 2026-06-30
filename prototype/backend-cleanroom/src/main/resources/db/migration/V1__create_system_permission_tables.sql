@@ -242,4 +242,3 @@ INSERT INTO sys_role_menu (role_id, menu_id, created_by, remark)
 SELECT 1, id, 1, '初始化超级管理员菜单权限'
 FROM sys_menu
 WHERE deleted = 0;
-

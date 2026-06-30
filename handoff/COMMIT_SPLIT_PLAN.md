@@ -1,6 +1,6 @@
 # Commit Split Plan
 
-更新时间：2026-06-30  
+更新时间：2026-06-30
 适用分支：`feature/ruoyi-5x-baseline-import`
 
 ## 1. 目标
