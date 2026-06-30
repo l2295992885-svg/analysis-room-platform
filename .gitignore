@@ -1,0 +1,33 @@
+# Build outputs
+**/target/
+**/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+
+# Runtime logs and local temp files
+logs/
+backend/logs/
+*.log
+*.tmp
+*.temp
+
+# Local-only environment and secret material
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# IDE and OS noise
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Test and coverage outputs
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
