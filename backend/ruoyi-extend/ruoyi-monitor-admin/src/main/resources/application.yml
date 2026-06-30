@@ -13,8 +13,8 @@ logging:
 spring:
   security:
     user:
-      name: @monitor.username@
-      password: @monitor.password@
+      name: ${APP_MONITOR_USERNAME:@monitor.username@}
+      password: ${APP_MONITOR_PASSWORD:change-me-monitor-password}
   boot:
     admin:
       ui:
@@ -47,5 +47,5 @@ spring.boot.admin.client:
     metadata:
       username: ${spring.boot.admin.client.username}
       userpassword: ${spring.boot.admin.client.password}
-  username: @monitor.username@
-  password: @monitor.password@
+  username: ${APP_MONITOR_USERNAME:@monitor.username@}
+  password: ${APP_MONITOR_PASSWORD:change-me-monitor-password}
